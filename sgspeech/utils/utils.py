@@ -90,3 +90,8 @@ def pad_prediction_tfarray(tfarray: tf.TensorArray, blank: int or tf.Tensor) -> 
         return tfarray
 
 
+def has_gpu_or_tpu():
+    gpus = tf.config.list_logical_devices("GPU")
+    tpus = tf.config.list_logical_devices("TPU")
+    if len(gpus) == 0 and len(tpus) == 0: return False
+    return True
