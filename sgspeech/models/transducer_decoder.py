@@ -239,7 +239,7 @@ class Transducer(Model):
                         speech_featurizer: SpeechFeaturizer,
                         text_featurizer: TextFeaturizer):
         """
-        Function to add featurizer to model to convert to end2end tflite
+        Function to add featurizer to model to convert to end2end tfliteggg
         Args:
             speech_featurizer: SpeechFeaturizer instance
             text_featurizer: TextFeaturizer instance

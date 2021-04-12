@@ -144,8 +144,6 @@ class NumpySpeechFeaturizer(SpeechFeaturizer):
             features = self.compute_mfcc(signal)
         elif self.feature_type == "log_mel_spectrogram":
             features = self.compute_log_mel_spectrogram(signal)
-        elif self.feature_type == "log_mel_spectrogram":
-            features = self.compute_spectrogram(signal)
         else:
             raise ValueError("mfcc or log_mel_spectrogram")
 

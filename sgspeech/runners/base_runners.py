@@ -175,6 +175,14 @@ class BaseTrainer(BaseRunner):
         while not self._finished():
             self._train_epoch()
 
+        self.save_checkpoint()
+        self.save_model_weights()
+        self.log_train_metrics()
+        self._eval_epoch()
+
+        self.train_progbar.close()
+        print(">Finish training")
+
     def _train_epoch(self):
 
         train_iterator = iter(self.train_data_loader)
@@ -270,6 +278,12 @@ class BaseTrainer(BaseRunner):
         self.set_eval_data_loader(eval_dataset, eval_bs)
         self.load_checkpoint()
         self.run()
+
+    def log_train_metrics(self):
+        self._write_to_tensorboard(self.train_metrics, self.steps, stage="train")
+
+        for metric in self.train_metrics.keys():
+            self.train_metrics[metric].reset_states()
 
     def _check_save_interval(self):
         if self.steps.numpy() % self.config.log_interval_steps == 0:
