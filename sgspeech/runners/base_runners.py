@@ -285,13 +285,12 @@ class BaseTrainer(BaseRunner):
         for metric in self.train_metrics.keys():
             self.train_metrics[metric].reset_states()
 
+    def _check_log_interval(self):
+        if self.steps.numpy() % self.config.log_interval_steps == 0:
+            self.log_train_metrics()
+
     def _check_save_interval(self):
         if self.steps.numpy() % self.config.log_interval_steps == 0:
-            self.save_checkpoint()
-            self.save_model_weights()
-
-    def _check_log_interval(self):
-        if self.steps.numpy() % self.config.save_interval_steps ==0:
             self.save_checkpoint()
             self.save_model_weights()
 
