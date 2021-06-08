@@ -8,7 +8,7 @@ AUGMENTATIONS = {
     "freq_masking": FreqMasking,
     "time_masking": TimeMasking,
     "noise": SignalNoise,
-    "maksing": SignalMask,
+    "masking": SignalMask,
     "cropping": SignalCropping,
     "loudness": SignalLoudness,
     "pitch": SignalPitch,

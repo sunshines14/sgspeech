@@ -1,7 +1,7 @@
 import setuptools
 
 requirements = [
-    "tensorflow-datasets>=4.2.0",
+    "tensorflow-datasets>=4.1.0",
     "tensorflow-addons>=0.10.0",
     "tensorflow-io>=0.16.0",
     "setuptools>=47.1.1",

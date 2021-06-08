@@ -393,6 +393,7 @@ class BaseTester(BaseRunner):
     @tf.function
     def _test_function(self, iterator):
         batch = next(iterator)
+        #tf.print("what?")
         return self._test_step(batch)
 
     @tf.function(experimental_relax_shapes=True)
@@ -409,7 +410,6 @@ class BaseTester(BaseRunner):
         if self.model.text_featurizer.decoder_config.lm_config:
             beam_lm_pred = self.model.recognize_beam(features, input_length, lm=True)
 
-        #tf.print("Beam!!!!!"+str(beam_pred))
 
         return file_paths, labels, greed_pred, beam_pred, beam_lm_pred
 
@@ -451,7 +451,9 @@ class BaseTester(BaseRunner):
         file_path = bytes_to_string(file_path)
         groundtruth = bytes_to_string(groundtruth)
         greedy = bytes_to_string(greedy)
-        #tf.print("Please!!!!!!!!!!!!!!!!"+str(beamsearch))
+
+        tf.print("Label!!!!!"+str(groundtruth))
+        tf.print("Greed!!!!!"+str(greedy))
         beamsearch = bytes_to_string(beamsearch) if beamsearch is not None else ["" for _ in file_path]
         beamsearch_lm = bytes_to_string(beamsearch_lm) if beamsearch_lm is not None else ["" for _ in file_path]
         with open(self.output_file_path, "a", encoding="utf-8") as out:

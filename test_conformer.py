@@ -14,7 +14,7 @@
 
 import os
 import argparse
-from tensorflow_asr.utils import setup_environment, setup_devices
+from sgspeech.utils import setup_environment, setup_devices
 
 setup_environment()
 import tensorflow as tf
@@ -48,13 +48,14 @@ setup_devices([args.device], cpu=args.cpu)
 from sgspeech.configs.config import Config
 from sgspeech.datasets.speech_dataset import SpeechSliceDataset
 from sgspeech.featurizers.speech_featurizer import NumpySpeechFeaturizer
-from sgspeech.featurizers.text_featurizer import CharFeaturizer
+from sgspeech.featurizers.text_featurizer import CharFeaturizer, PhoneFeaturizer
 from sgspeech.runners.base_runners import BaseTester
 from sgspeech.models.conformer import Conformer
 
 config = Config(args.config)
 speech_featurizer = NumpySpeechFeaturizer(config.speech_config)
-text_featurizer = CharFeaturizer(config.decoder_config)
+#text_featurizer = CharFeaturizer(config.decoder_config)
+text_featurizer = PhoneFeaturizer(config.decoder_config)
 
 tf.random.set_seed(0)
 assert args.saved
@@ -77,4 +78,4 @@ conformer_tester = BaseTester(
     output_name=args.output_name
 )
 conformer_tester.compile(conformer)
-conformer_tester.run(test_dataset)
+conformer_tester.run(test_dataset, batch_size=1)

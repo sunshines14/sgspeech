@@ -36,13 +36,14 @@ strategy = setup_strategy(args.devices)
 from sgspeech.configs.config import Config
 from sgspeech.datasets.speech_dataset import SpeechSliceDataset
 from sgspeech.featurizers.speech_featurizer import NumpySpeechFeaturizer
-from sgspeech.featurizers.text_featurizer import CharFeaturizer
+from sgspeech.featurizers.text_featurizer import CharFeaturizer, PhoneFeaturizer
 from sgspeech.runners.ctc_runners import CTCTrainer
 from sgspeech.models.jasper import Jasper
 
 config = Config(args.config)
 speech_featurizer = NumpySpeechFeaturizer(config.speech_config)
 text_featurizer = CharFeaturizer(config.decoder_config)
+text_featurizer = PhoneFeaturizer(config.decoder_config)
 
 train_dataset = SpeechSliceDataset(speech_featurizer=speech_featurizer, text_featurizer=text_featurizer,**vars(config.learning_config.train_dataset_config))
 eval_dataset = SpeechSliceDataset(speech_featurizer=speech_featurizer, text_featurizer=text_featurizer,**vars(config.learning_config.eval_dataset_config))

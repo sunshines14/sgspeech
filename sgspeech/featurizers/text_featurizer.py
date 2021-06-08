@@ -12,6 +12,11 @@ import tensorflow_datasets as tds
 
 ENGLISH_CHARACTERS = [" ", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
                       "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "'"]
+
+KOREAN_CHARACTERS = [" ","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄸ","ㄹ","ㄺ","ㄻ","ㄼ","ㄾ","ㅀ","ㅁ","ㅂ",
+                     "ㅃ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ","ㅏ","ㅐ","ㅑ","ㅒ",
+                     "ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"]
+
 """
 PHONE_CHARACTERS = [" ", "/AA", "/AA0", "/AA1/", "/AA2/", "/AE/", "/AE0/", "/AE1/", "/AE2/", "/AH/",
                        "/AH0", "/AH1", "/AH2/", "/AO/", "/AO0/", "/AO1/", "/AO2/", "/AW/", "/AW0/", "/AW1/",
@@ -24,13 +29,13 @@ PHONE_CHARACTERS = [" ", "/AA", "/AA0", "/AA1/", "/AA2/", "/AE/", "/AE0/", "/AE1
                         "W", "Y", "Z", "ZH"]
 """
 
-PHONE_CHARACTERS = [" ", 'p0', 'ph', 'pp', 't0', 'th', 'tt', 'k0', 'kh', 'kk', 's0',
-                     'ss', 'h0', 'c0', 'ch', 'cc', 'mm', 'nn', 'rr', 'pf', 'ph',
-                     'tf', 'th', 'kf', 'kh', 'kk', 's0', 'ss', 'h0', 'c0', 'ch',
-                     'mf', 'nf', 'ng', 'll', 'ks', 'nc', 'nh', 'ik', 'lm', 'lb',
-                     'ls', 'lt', 'lp', 'lh', 'ps', 'ii', 'ee', 'qq', 'aa', 'xx',
-                     'vv', 'uu', 'oo', 'ye', 'yq', 'ya', 'yv', 'yu', 'yo', 'wi',
-                     'wo', 'wq', 'we', 'wa', 'wv', 'xi']
+
+PHONE_CHARACTERS = [ 'p0', 'ph', 'pp', 't0', 'th', 'tt', 'k0', 'kh', 'kk', 's0', 'ss',
+                     'h0', 'c0', 'ch', 'cc', 'mm', 'nn', 'rr', 'pf', 'tf', 'kf', 'mf',
+                     'nf', 'ng', 'll', 'ks', 'nc', 'nh', 'lk', 'lm', 'lb', 'ls', 'lt',
+                     'lp', 'lh', 'ps', 'ii', 'ee', 'qq', 'aa', 'xx', 'vv', 'uu', 'oo',
+                     'ye', 'yq', 'ya', 'yv', 'yu', 'yo', 'wi', 'wo', 'wq', 'we', 'wa',
+                     'wv', 'xi', '@@']
 
 LABEL_AUDIOS = ["baby","bicycle","boiling","car","carpassing", "clock","dog",
                 "door","fire","glass","jackhammer","kettle","scream","siren",
@@ -103,7 +108,8 @@ class CharFeaturizer(TextFeaturizer):
             with codecs.open(self.decoder_config.vocabulary, "r", "utf-8") as fin:
                 lines.extend(fin.readlines())
         else:
-            lines = ENGLISH_CHARACTERS
+            #lines = ENGLISH_CHARACTERS
+            lines = KOREAN_CHARACTERS
 
         self.blank = 0 if self.decoder_config.blank_at_zero else None
         self.tokens2indices = {}
@@ -187,7 +193,7 @@ class PhoneFeaturizer(TextFeaturizer):
         #text = self.preprocess_text(text)
         #tf.print("beforestrip")
         #tf.print(text)
-        text = text.split(" ")[1:]
+        text = text.strip('\n').split(" ")
         #tf.print("afterstrip")
         #tf.print(text)
         indices = [self.tokens2indices[token] for token in text]
@@ -253,10 +259,10 @@ class LabelFeaturizer(TextFeaturizer):
         #text = self.preprocess_text(text)
         #tf.print("beforestrip")
         #tf.print(text)
-        text = text.split(" ")[1:]
+        #text = text.split(" ")[1:]
         #tf.print("afterstrip")
         #tf.print(text)
-        indices = [self.tokens2indices[token] for token in text]
+        indices = [self.tokens2indices[text]]
         return tf.convert_to_tensor(indices, dtype=tf.int32)
 
     def iextract(self, indices: tf.Tensor) -> tf.Tensor:

@@ -37,8 +37,17 @@ model_config:
 learning_config:
   train_dataset_config:
     use_tf: True
+    augmentation_config:
+      after:
+        time_masking:
+          num_masks: 10
+          mask_factor: 100
+          p_upperbound: 0.05
+        freq_masking:
+          num_masks: 1
+          mask_factor: 27
     data_paths:
-      - /home/ubuntu/LibriSpeech_tfasr/train-960/transcripts.tsv
+      - /home/hosung/sgspeech/train01.tsv
     shuffle: True
     cache: True
     buffer_size: 100
@@ -48,7 +57,7 @@ learning_config:
   eval_dataset_config:
     use_tf: True
     data_paths:
-      - /home/ubuntu/LibriSpeech_tfasr/dev-clean/transcripts.tsv
+      - /home/hosung/sgspeech/test01.tsv
     shuffle: False
     cache: True
     buffer_size: 100
@@ -58,7 +67,7 @@ learning_config:
   test_dataset_config:
     use_tf: True
     data_paths:
-      - /home/ubuntu/LibriSpeech_tfasr/test-clean/transcripts.tsv
+      - /home/hosung/sgspeech/test01.tsv
     shuffle: False
     cache: False
     buffer_size: 100
@@ -71,21 +80,21 @@ learning_config:
       learning_rate: 0.0001
 
   running_config:
-    batch_size: 1
-    num_epochs: 50
+    batch_size: 16
+    num_epochs: 30
     accumulation_steps: 8
-    outdir: /home/ubuntu/deepspeech2phone_tfasr
-    log_interval_steps: 40000
-    save_interval_steps: 40000
-    eval_interval_steps: 80000
+    outdir: /home/hosung/aed01_tfasr
+    log_interval_steps: 400
+    save_interval_steps: 400
+    eval_interval_steps: 800
     checkpoint:
-      filepath: /home/ubuntu/deepspeech2phone_tfasr/checkpoints/{epoch:02d}.h5
+      filepath: /home/hosung/aed01_tfasr/checkpoints/{epoch:02d}.h5
       save_best_only: True
       save_weights_only: False
       save_freq: epoch
-    states_dir: /home/ubuntu/deepspeech2phone_tfasr/states
+    states_dir: /home/hosung/aed01_tfasr/states
     tensorboard:
-      log_dir: /home/ubuntu/deepspeech2phone_tfasr/tensorboard
+      log_dir: /home/hosung/aed01_tfasr/tensorboard
       histogram_freq: 1
       write_graph: True
       write_images: True

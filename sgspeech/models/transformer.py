@@ -15,7 +15,6 @@
 import tensorflow as tf
 
 from .activation import GLU
-from .ctc import CTCModel
 from .transducer_decoder import Transducer
 from .layers.subsampling import VggSubsampling, Conv2dSubsampling
 from .layers.positional_encoding import PositionalEncoding, PositionalEncodingConcat
@@ -206,66 +205,6 @@ class ConvModule(tf.keras.layers.Layer):
         conf.update(self.res_add.get_config())
         return conf
 
-class FcBlock(tf.keras.layers.Layer):
-    def __init__(self,
-                 units: int = 1024,
-                 dropout: float = 0.1,
-                 **kwargs):
-        super(FcBlock,self).__init__(**kwargs)
-
-        self.fc = tf.keras.layers.Dense(units, name=f"{self.name}")
-        self.bn = tf.keras.layers.BatchNormalization(name=f"{self.name}_bn")
-        self.relu = tf.keras.layers.ReLU(name=f"{self.name}_relu")
-        self.do = tf.keras.layers.Dropout(dropout, name=f"{self.name}_dropout")
-
-    def call(self, inputs, training=False, **kwargs):
-        outputs = self.fc(inputs, training=training)
-        outputs = self.bn(outputs, training=training)
-        outputs = self.relu(outputs, training=training)
-        outputs = self.do(outputs, training=training)
-        return outputs
-
-    def get_config(self):
-        conf = super(FcBlock, self).get_config()
-        conf.update(self.fc.get_config())
-        conf.update(self.bn.get_config())
-        conf.update(self.relu.get_config())
-        conf.update(self.do.get_config())
-        return conf
-
-class FcModule(tf.keras.Model):
-    def __init__(self,
-                 vocabulary_size: int,
-                 nlayers: int = 0,
-                 units: int = 1024,
-                 dropout: float = 0.1,
-                 **kwargs):
-        super(FcModule, self).__init__(**kwargs)
-
-        self.blocks = [
-            FcBlock(
-                units=units,
-                dropout=dropout,
-                name=f"{self.name}_block_{i}"
-            ) for i in range(nlayers)
-        ]
-
-        self.fc = tf.keras.layers.Dense(units=vocabulary_size,
-                                        use_bias=True, name=f"{self.name}_fc")
-
-    def call(self, inputs, training=False, **kwargs):
-        outputs = inputs
-        for block in self.blocks:
-            outputs = block(outputs, training=training, **kwargs)
-        outputs = self.fc(outputs, training=training)
-        return outputs
-
-    def get_config(self):
-        conf = {}
-        for block in self.blocks:
-            conf.update(block.get_config())
-        conf.update(self.fc.get_config())
-        return conf
 
 class ConformerBlock(tf.keras.layers.Layer):
     def __init__(self,
@@ -419,103 +358,6 @@ class ConformerEncoder(tf.keras.Model):
             conf.update(cblock.get_config())
         return conf
 
-class ConformerCTC(CTCModel):
-    def __init__(self,
-                 vocabulary_size: int,
-                 encoder_subsampling:dict,
-                 encoder_positional_encoding="sinusoid",
-                 encoder_dmodel=144,
-                 encoder_num_blocks=16,
-                 encoder_mha_type="relmha",
-                 encoder_head_size=36,
-                 encoder_num_heads=4,
-                 encoder_kernel_size=32,
-                 depth_multiplier=1,
-                 encoder_fc_factor=0.5,
-                 encoder_dropout=0.0,
-                 kernel_regularizer=L2,
-                 bias_regularizer=L2,
-                 name="conformer_CTC",
-                 **kwargs):
-        super(ConformerCTC, self).__init__(name=name, **kwargs)
-
-        subsampling_name = encoder_subsampling.pop("type", "conv2d")
-        if subsampling_name == "vgg":
-            subsampling_class = VggSubsampling
-        elif subsampling_name == "conv2d":
-            subsampling_class = Conv2dSubsampling
-        else:
-            raise ValueError("subsampling must be either  'conv2d' or 'vgg'")
-
-        self.conv_subsampling = subsampling_class(
-            **encoder_subsampling, name=f"{name}_subsampling",
-            kernel_regularizer=kernel_regularizer,
-            bias_regularizer=bias_regularizer
-        )
-
-        if encoder_positional_encoding == "sinusoid":
-            self.pe = PositionalEncoding(name=f"{name}_pe")
-        elif encoder_positional_encoding == "sinusoid_concat":
-            self.pe = PositionalEncodingConcat(name=f"{name}_pe")
-        elif encoder_positional_encoding == "subsampling":
-            self.pe = tf.keras.layers.Activation("linear", name=f"{name}_pe")
-        else:
-            raise ValueError("positional_encoding must be either 'sinusoid' or 'subsampling'")
-
-        self.linear = tf.keras.layers.Dense(
-            encoder_dmodel, name=f"{name}_linear",
-            kernel_regularizer=kernel_regularizer,
-            bias_regularizer=bias_regularizer
-        )
-        self.do = tf.keras.layers.Dropout(encoder_dropout, name=f"{name}_dropout")
-
-        self.conformer_blocks = []
-        for i in range(encoder_num_blocks):
-            conformer_block = ConformerBlock(
-                input_dim=encoder_dmodel,
-                dropout=encoder_dropout,
-                fc_factor=encoder_fc_factor,
-                head_size=encoder_head_size,
-                num_heads=encoder_num_heads,
-                mha_type=encoder_mha_type,
-                kernel_size=encoder_kernel_size,
-                depth_multiplier=depth_multiplier,
-                kernel_regularizer=kernel_regularizer,
-                bias_regularizer=bias_regularizer,
-                name=f"{name}_block_{i}"
-            )
-            self.conformer_blocks.append(conformer_block)
-
-        self.fc_module = FcModule(
-            nlayers=1,
-            units=1024,
-            dropout=encoder_dropout,
-            vocabulary_size=vocabulary_size,
-            name=f"{self.name}_fc_module"
-        )
-
-        self.dmodel = encoder_dmodel
-
-    def call(self, inputs, training=False, mask=None, **kwargs):
-        # input with shape [B, T, V1, V2]
-        outputs = self.conv_subsampling(inputs, training=training)
-        outputs = self.linear(outputs, training=training)
-        pe = self.pe(outputs)
-        outputs = self.do(outputs, training=training)
-        for cblock in self.conformer_blocks:
-            outputs = cblock([outputs, pe], training=training, mask=mask, **kwargs)
-        outputs = self.fc_module(outputs, training=training, **kwargs)
-        return outputs
-
-    def get_config(self):
-        conf = super(ConformerCTC, self).get_config()
-        conf.update(self.conv_subsampling.get_config())
-        conf.update(self.linear.get_config())
-        conf.update(self.do.get_config())
-        conf.update(self.pe.get_config())
-        for cblock in self.conformer_blocks:
-            conf.update(cblock.get_config())
-        return conf
 
 class Conformer(Transducer):
     def __init__(self,
@@ -580,4 +422,3 @@ class Conformer(Transducer):
         )
         self.dmodel = encoder_dmodel
         self.time_reduction_factor = self.encoder.conv_subsampling.time_reduction_factor
-
