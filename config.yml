@@ -97,18 +97,18 @@ learning_config:
     batch_size: 16
     accumulation_steps: 4
     num_epochs: 100
-    outdir: /home/ubuntu/conformerCTC_tfasr
+    outdir: /home/ubuntu/conformer
     log_interval_steps: 300
     eval_interval_steps: 50000
     save_interval_steps: 100000
     checkpoint:
-      filepath: /home/ubuntu/conformerCTC_tfasr/checkpoints/{epoch:02d}.h5
+      filepath: /home/ubuntu/conformer/checkpoints/{epoch:02d}.h5
       save_best_only: True
       save_weights_only: False
       save_freq: epoch
-    states_dir: /home/ubuntu/conformerCTC_tfasr/states
+    states_dir: /home/ubuntu/conformer/states
     tensorboard:
-      log_dir: /home/ubuntu/conformerCTC_tfasr/tensorboard
+      log_dir: /home/ubuntu/conformer/tensorboard
       histogram_freq: 1
       write_graph: True
       write_images: True
