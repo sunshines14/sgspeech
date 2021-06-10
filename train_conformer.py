@@ -35,16 +35,15 @@ strategy = setup_strategy(args.devices)
 from sgspeech.configs.config import Config
 from sgspeech.datasets.speech_dataset import SpeechSliceDataset
 from sgspeech.featurizers.speech_featurizer import NumpySpeechFeaturizer
-from sgspeech.featurizers.text_featurizer import CharFeaturizer, PhoneFeaturizer
+from sgspeech.featurizers.text_featurizer import CharFeaturizer
 from sgspeech.runners.transducer_runners import TransducerTrainer
 from sgspeech.models.conformer import Conformer
 from sgspeech.optimizers.schedules import TransformerSchedule
-from sgspeech.runners.ctc_runners import CTCTrainer
 
 config = Config(args.config)
 speech_featurizer = NumpySpeechFeaturizer(config.speech_config)
-#text_featurizer = CharFeaturizer(config.decoder_config)
-text_featurizer = PhoneFeaturizer(config.decoder_config)
+text_featurizer = CharFeaturizer(config.decoder_config)
+#text_featurizer = PhoneFeaturizer(config.decoder_config)
 
 train_dataset = SpeechSliceDataset(
     speech_featurizer=speech_featurizer, text_featurizer=text_featurizer,
@@ -60,12 +59,9 @@ conformer_trainer = TransducerTrainer(
     text_featurizer=text_featurizer, strategy=strategy
 )
 
-#conformer_trainer = CTCTrainer(text_featurizer, config.learning_config.running_config)
-
 with conformer_trainer.strategy.scope():
     # build model
     conformer = Conformer(**config.model_config, vocabulary_size=text_featurizer.num_classes)
-    #conformer = ConformerCTC(**config.model_config, vocabulary_size=text_featurizer.num_classes)
     conformer._build(speech_featurizer.shape)
     conformer.summary(line_length=120)
 

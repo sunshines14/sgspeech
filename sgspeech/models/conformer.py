@@ -15,7 +15,6 @@
 import tensorflow as tf
 
 from .activation import GLU
-from .ctc import CTCModel
 from .transducer_decoder import Transducer
 from .layers.subsampling import VggSubsampling, Conv2dSubsampling
 from .layers.positional_encoding import PositionalEncoding, PositionalEncodingConcat

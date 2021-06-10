@@ -4,12 +4,10 @@ import tensorflow as tf
 BUFFER_SIZE = 100
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-from ..augmentation.augments import Augmentation
 
 class BaseDataset(metaclass=ABCMeta):
     def __init__(self,
                  data_paths: list,
-                 augmentations: Augmentation = Augmentation(None),
                  cache: bool = False,
                  shuffle: bool = False,
                  buffer_size: int = BUFFER_SIZE,
@@ -18,7 +16,6 @@ class BaseDataset(metaclass=ABCMeta):
                  stage: str = "train",
                  **kwargs):
         self.data_paths = data_paths
-        self.augmentations = augmentations
         self.cache = cache
         self.shuffle = shuffle
         if buffer_size <= 0 and shuffle: raise ValueError("buffer_size must be positive when shuffle is on")

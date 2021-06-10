@@ -16,7 +16,6 @@ import os
 import tensorflow as tf
 
 from ..configs.config import RunningConfig
-from ..optimizers.accumulation import GradientAccumulation
 from .base_runners import BaseTrainer
 from ..losses.rnnt_losses import rnnt_loss
 from ..models.transducer_decoder import Transducer
@@ -86,51 +85,3 @@ class TransducerTrainer(BaseTrainer):
             self.model = model
             self.optimizer = tf.keras.optimizers.get(optimizer)
         self.create_checkpoint_manager(max_to_keep, model=self.model, optimizer=self.optimizer)
-
-
-class TransducerTrainerGA(TransducerTrainer):
-    """ Transducer Trainer that uses Gradients Accumulation """
-
-    @tf.function
-    def _train_function(self, iterator):
-        for _ in range(self.config.accumulation_steps):
-            batch = next(iterator)
-            self.strategy.run(self._train_step, args=(batch,))
-        self.strategy.run(self._apply_gradients, args=())
-
-    @tf.function
-    def _apply_gradients(self):
-        self.optimizer.apply_gradients(
-            zip(self.accumulation.gradients, self.model.trainable_variables))
-        self.accumulation.reset()
-
-    @tf.function(experimental_relax_shapes=True)
-    def _train_step(self, batch):
-        _, features, input_length, labels, label_length, prediction, prediction_length = batch
-
-        with tf.GradientTape() as tape:
-            logits = self.model([features, input_length, prediction, prediction_length], training=True)
-            tape.watch(logits)
-            per_train_loss = rnnt_loss(
-                logits=logits, labels=labels, label_length=label_length,
-                logit_length=get_reduced_length(input_length, self.model.time_reduction_factor),
-                blank=self.text_featurizer.blank
-            )
-            train_loss = tf.nn.compute_average_loss(
-                per_train_loss,
-                global_batch_size=self.global_batch_size
-            )
-
-        gradients = tape.gradient(train_loss, self.model.trainable_variables)
-        self.accumulation.accumulate(gradients)
-        self.train_metrics["transducer_loss"].update_state(per_train_loss)
-
-    def compile(self,
-                model: Transducer,
-                optimizer: any,
-                max_to_keep: int = 10):
-        with self.strategy.scope():
-            self.model = model
-            self.optimizer = tf.keras.optimizers.get(optimizer)
-        self.create_checkpoint_manager(max_to_keep, model=self.model, optimizer=self.optimizer)
-        self.accumulation = GradientAccumulation(self.model.trainable_variables)

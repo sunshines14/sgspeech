@@ -6,18 +6,16 @@ import numpy as np
 from ..featurizers.speech_featurizer import load_and_convert_to_wav, read_raw_audio, SpeechFeaturizer
 from ..featurizers.text_featurizer import TextFeaturizer
 from ..utils.utils import get_num_batches
-from ..augmentation.augments import Augmentation
+
 
 
 class SpeechDataset(BaseDataset):
 
-    # speech, text feature extractor 추가해야됨
     def __init__(self,
                  stage: str,
                  speech_featurizer: SpeechFeaturizer,
                  text_featurizer: TextFeaturizer,
                  data_paths: list,
-                 augmentations: Augmentation = Augmentation(None),
                  cache: bool = False,
                  shuffle: bool= False,
                  indefinite: bool = False,
@@ -26,7 +24,7 @@ class SpeechDataset(BaseDataset):
                  buffer_size: int = BUFFER_SIZE,
                  **kwargs):
         super(SpeechDataset, self).__init__(
-            data_paths=data_paths, cache=cache, augmentations=augmentations, shuffle=shuffle, buffer_size=buffer_size, drop_remainder=drop_remainder,
+            data_paths=data_paths, cache=cache, shuffle=shuffle, buffer_size=buffer_size, drop_remainder=drop_remainder,
             use_tf=use_tf)
 
         # speech, text feature extractor 추가해야됨
@@ -67,10 +65,7 @@ class SpeechDataset(BaseDataset):
             def fn(_path: bytes, _audio: bytes, _indices: bytes):
                 signal = read_raw_audio(_audio, sample_rate=self.speech_featurizer.sample_rate)
 
-                signal = self.augmentations.before.augment(signal)
                 features = self.speech_featurizer.extract(signal)
-
-                features = self.augmentations.after.augment(features)
 
                 label = tf.strings.to_number(tf.strings.split(_indices), out_type=tf.int32)
                 label_len = tf.cast(tf.shape(label)[0], tf.int32)
@@ -85,22 +80,6 @@ class SpeechDataset(BaseDataset):
                 fn, inp=[path, audio, indices],
                 Tout=[tf.string, tf.float32, tf.int32, tf.int32, tf.int32, tf.int32, tf.int32]
             )
-
-    # def tf_preprocess(self, path: tf.tensor, audio: tf.tensor, indices: tf.tensor):
-    #     with tf.device("/cpu:0"):
-    #         signal = tf_read_raw_audio(audio, self.speech_featurizer.sample_rate)
-    #         # aumentation 추가해야 함
-    #         features = self.speech_featurizer.tf_extract(signal)
-    #         # aumentation 추가해야 함
-    #
-    #         label = tf.strings.to_number(tf.strings.split(indices), out_type=tf.int32)
-    #         label_len = tf.cast(tf.shape(label)[0], tf.int32)
-    #         prediction = self.text_featurizer.prepand_blank(label)
-    #         prediction_len = tf.cast(tf.shape(prediction)[0], tf.int32)
-    #         features = tf.convert_to_tensor(features, tf.float32)
-    #         input_len = tf.cast(tf.shape(features)[0], tf.int32)
-    #
-    #         return path, features, input_len, label, label_len, prediction, prediction_len
 
     @tf.function
     def parse(self, path: tf.Tensor, audio: tf.Tensor, indices: tf.Tensor):
@@ -149,7 +128,6 @@ class SpeechDataset(BaseDataset):
 
 
 class SpeechSliceDataset(SpeechDataset):
-
     @staticmethod
     def load(record: tf.Tensor):
         def fn(path: bytes): return load_and_convert_to_wav(path.decode("utf-8")).numpy()

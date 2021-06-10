@@ -3,7 +3,6 @@
 from abc import ABCMeta, abstractmethod
 
 import tensorflow as tf
-#import tensorflow_io as tfio
 import soundfile as sf
 import numpy as np
 

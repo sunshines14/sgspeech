@@ -340,13 +340,6 @@ class BaseTester(BaseRunner):
         if not batch_size: batch_size = self.config.batch_size
         with open(self.output_file_path, "w") as out:
             out.write("PATH\tGROUNDTRUTH\tGREEDY\tBEAMSEARCH\tBEAMSEARCHLM\n")
-        #if os.path.exists(self.output_file_path):
-        #    with open(self.output_file_path, "r", encoding="utf-8") as out:
-        #        self.processed_records = get_num_batches(len(out.read().splitlines())-1, batch_size=batch_size, drop_remainders=False)
-
-        #else:
-        #    with open(self.output_file_path, "w") as out:
-        #        out.write("PATH\tGROUNDTRUTH\tGREEDY\tBEAMSEARCH\tBEAMSEARCHLM\n")
 
 
     def set_test_data_loader(self, test_dataset, batch_size = None):
@@ -403,15 +396,13 @@ class BaseTester(BaseRunner):
         labels = self.model.text_featurizer.iextract(labels)
         input_length = get_reduced_length(input_length, self.model.time_reduction_factor)
         greed_pred = self.model.recognize(features, input_length)
-        beam_pred = beam_lm_pred = None
+        beam_pred = None
 
         if self.model.text_featurizer.decoder_config.beam_width > 0:
             beam_pred = self.model.recognize_beam(features, input_length, lm=False)
-        if self.model.text_featurizer.decoder_config.lm_config:
-            beam_lm_pred = self.model.recognize_beam(features, input_length, lm=True)
 
 
-        return file_paths, labels, greed_pred, beam_pred, beam_lm_pred
+        return file_paths, labels, greed_pred, beam_pred
 
     def _finish(self):
         tf.print("\n> Calculating evaluation metrics ...")
@@ -421,26 +412,23 @@ class BaseTester(BaseRunner):
 
         for line in lines:
             line = line.split("\t")
-            labels, greed_pred, beam_pred, beam_lm_pred = line[1], line[2], line[3], line[4]
+            labels, greed_pred, beam_pred= line[1], line[2], line[3]
             labels = tf.convert_to_tensor([labels], dtype=tf.string)
             greed_pred = tf.convert_to_tensor([greed_pred], dtype=tf.string)
             beam_pred = tf.convert_to_tensor([beam_pred], dtype=tf.string)
-            beam_lm_pred = tf.convert_to_tensor([beam_lm_pred], dtype=tf.string)
 
             self.test_metrics["greed_wer"].update_state(greed_pred, labels)
             self.test_metrics["greed_cer"].update_state(greed_pred, labels)
             self.test_metrics["beam_wer"].update_state(beam_pred, labels)
             self.test_metrics["beam_cer"].update_state(beam_pred, labels)
-            self.test_metrics["beam_lm_wer"].update_state(beam_lm_pred, labels)
-            self.test_metrics["beam_lm_cer"].update_state(beam_lm_pred, labels)
+
 
         tf.print("Test results:")
         tf.print("G_WER = ", self.test_metrics["greed_wer"].result())
         tf.print("G_CER = ", self.test_metrics["greed_cer"].result())
         tf.print("B_WER = ", self.test_metrics["beam_wer"].result())
         tf.print("B_CER = ", self.test_metrics["beam_cer"].result())
-        tf.print("BLM_WER = ", self.test_metrics["beam_lm_wer"].result())
-        tf.print("BLM_CER = ", self.test_metrics["beam_lm_cer"].result())
+
 
     def _append_to_file(self,
                         file_path: np.ndarray,
