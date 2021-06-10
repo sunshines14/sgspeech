@@ -54,8 +54,7 @@ from sgspeech.models.conformer import Conformer
 
 config = Config(args.config)
 speech_featurizer = NumpySpeechFeaturizer(config.speech_config)
-#text_featurizer = CharFeaturizer(config.decoder_config)
-text_featurizer = PhoneFeaturizer(config.decoder_config)
+text_featurizer = CharFeaturizer(config.decoder_config)
 
 tf.random.set_seed(0)
 assert args.saved

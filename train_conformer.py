@@ -43,7 +43,6 @@ from sgspeech.optimizers.schedules import TransformerSchedule
 config = Config(args.config)
 speech_featurizer = NumpySpeechFeaturizer(config.speech_config)
 text_featurizer = CharFeaturizer(config.decoder_config)
-#text_featurizer = PhoneFeaturizer(config.decoder_config)
 
 train_dataset = SpeechSliceDataset(
     speech_featurizer=speech_featurizer, text_featurizer=text_featurizer,

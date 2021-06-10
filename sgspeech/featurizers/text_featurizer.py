@@ -108,8 +108,8 @@ class CharFeaturizer(TextFeaturizer):
             with codecs.open(self.decoder_config.vocabulary, "r", "utf-8") as fin:
                 lines.extend(fin.readlines())
         else:
-            #lines = ENGLISH_CHARACTERS
-            lines = KOREAN_CHARACTERS
+            lines = ENGLISH_CHARACTERS
+            #lines = KOREAN_CHARACTERS
 
         self.blank = 0 if self.decoder_config.blank_at_zero else None
         self.tokens2indices = {}
